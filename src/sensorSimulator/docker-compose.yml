@@ -1,84 +1,9 @@
 version: '3'
 
 services:
-  mqtt_publisher:
-    image: mqtt_publisher
+  sensorsimulator:
+    image: sensorsimulator
     build:
       context: .
-    environment:
-      - CLIENT_ID=publisher1
     network_mode: host
-
-  mqtt_publisher2:
-    image: mqtt_publisher
-    build:
-      context: .
-    environment:
-      - CLIENT_ID=publisher2
-    network_mode: host
-
-  mqtt_publisher3:
-    image: mqtt_publisher
-    build:
-      context: .
-    environment:
-      - CLIENT_ID=publisher3
-    network_mode: host
-
-  mqtt_publisher4:
-    image: mqtt_publisher
-    build:
-      context: .
-    environment:
-      - CLIENT_ID=publisher4
-    network_mode: host
-
-  mqtt_publisher5:
-    image: mqtt_publisher
-    build:
-      context: .
-    environment:
-      - CLIENT_ID=publisher5
-    network_mode: host
-
-  mqtt_publisher6:
-    image: mqtt_publisher
-    build:
-      context: .
-    environment:
-      - CLIENT_ID=publisher6
-    network_mode: host
-
-  mqtt_publisher7:
-    image: mqtt_publisher
-    build:
-      context: .
-    environment:
-      - CLIENT_ID=publisher7
-    network_mode: host
-
-  mqtt_publisher8:
-    image: mqtt_publisher
-    build:
-      context: .
-    environment:
-      - CLIENT_ID=publisher8
-    network_mode: host
-
-  mqtt_publisher9:
-    image: mqtt_publisher
-    build:
-      context: .
-    environment:
-      - CLIENT_ID=publisher9
-    network_mode: host
-
-  mqtt_publisher10:
-    image: mqtt_publisher
-    build:
-      context: .
-    environment:
-      - CLIENT_ID=publisher10
-    network_mode: host
-
-  # Add more services for additional publishers...
+    scale: 10

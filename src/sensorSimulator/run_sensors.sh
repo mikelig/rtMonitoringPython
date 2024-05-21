@@ -22,9 +22,9 @@ DOCKER_COMPOSE_FILE="$2"
 echo "Building Docker image..."
 docker build -t sensorsimulator -f "$DOCKERFILE" .
 
-# Step 2: Start 10 containers using docker-compose
-echo "Starting 10 containers..."
-docker-compose -f "$DOCKER_COMPOSE_FILE" up --scale sensorsimulator=10 -d
+# Step 2: Start containers using docker-compose
+echo "Starting containers..."
+docker-compose -f "$DOCKER_COMPOSE_FILE" up -d
 
 # Wait for a few seconds to ensure containers are up and running
 sleep 5
