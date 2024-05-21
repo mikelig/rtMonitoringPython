@@ -9,6 +9,7 @@ import numpy as np
 from subprocess import call
 from threading import Timer
 import logging
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='testing.log', encoding='utf-8', level=logging.DEBUG, format='%(asctime)s %(message)s')
@@ -49,7 +50,7 @@ def init_db():
 # Function to process batch
 async def process_batch(sensor_id, events):
     logging.debug(f"4_1- entered process_batch with events len = {len(events)}")
-    values = [event[3] for event in events]
+    values = [event[4] for event in events]
     outlier_indices = filter_outliers(values)
     filtered_events = [event for index, event in enumerate(events) if index not in outlier_indices]
 
@@ -60,8 +61,8 @@ async def process_batch(sensor_id, events):
         conn = sqlite3.connect('sensor_events.db')
         cursor = conn.cursor()
         cursor.executemany('''
-        INSERT INTO sensorEvents (receptionTs, idSensor, sensorType, sensorValue)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO sensorEvents (receptionTs, receptionDt, idSensor, sensorType, sensorValue)
+        VALUES (?, ?, ?, ?, ?)
         ''', filtered_events)
         conn.commit()
         conn.close()
@@ -84,13 +85,15 @@ def on_message(client, userdata, msg):
         sensor_id = data['sensor_id']
         sensor_type = data['sensor_type']
         value = float(data['value'])
-        timestamp = int(time.time())
+        timestamp = int(time.time_ns()) # ns since epoch
+        utc_datetime = datetime.fromtimestamp(timestamp / 1e9, tz=timezone.utc)
+        datetime_str = utc_datetime.isoformat()
 
         with lock:
             if sensor_id not in event_batches:
                 event_batches[sensor_id] = ([], None)
 
-            event_batches[sensor_id][0].append((timestamp, sensor_id, sensor_type, value))
+            event_batches[sensor_id][0].append((timestamp, datetime_str, sensor_id, sensor_type, value))
             logging.debug(f"2- sensor {sensor_id} batch size = {len(event_batches[sensor_id][0])}")
 
             if len(event_batches[sensor_id][0]) >= batch_size:
