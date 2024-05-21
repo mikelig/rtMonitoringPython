@@ -11,8 +11,9 @@ from threading import Timer
 import logging
 from datetime import datetime, timezone
 
+LOGLEVEL = 30 #warning
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='testing.log', encoding='utf-8', level=logging.DEBUG, format='%(asctime)s %(message)s')
+logging.basicConfig(filename='testing.log', encoding='utf-8', level=LOGLEVEL, format='%(asctime)s %(message)s')
 
 # MQTT Settings
 BROKER = 'localhost'
@@ -59,6 +60,7 @@ async def process_batch(sensor_id, events):
     if filtered_events:
         logging.debug(f"4_2- Len after filter: {len(filtered_events)}")
         conn = sqlite3.connect('sensor_events.db')
+        logging.debug(f"4_3 DB connected")
         cursor = conn.cursor()
         cursor.executemany('''
         INSERT INTO sensorEvents (receptionTs, receptionDt, idSensor, sensorType, sensorValue)
@@ -66,6 +68,7 @@ async def process_batch(sensor_id, events):
         ''', filtered_events)
         conn.commit()
         conn.close()
+        logging.debug(f"4_4 Events saved to DB")
     del filtered_events
 
 # Timer callback function
@@ -85,15 +88,17 @@ def on_message(client, userdata, msg):
         sensor_id = data['sensor_id']
         sensor_type = data['sensor_type']
         value = float(data['value'])
-        timestamp = int(time.time_ns()) # ns since epoch
-        utc_datetime = datetime.fromtimestamp(timestamp / 1e9, tz=timezone.utc)
-        datetime_str = utc_datetime.isoformat()
-
+        dt_now = datetime.now(tz=timezone.utc)
+        timestamp = round(dt_now.timestamp() * 1000)
+        datetime_str = dt_now.isoformat()
+        del dt_now
         with lock:
             if sensor_id not in event_batches:
                 event_batches[sensor_id] = ([], None)
 
             event_batches[sensor_id][0].append((timestamp, datetime_str, sensor_id, sensor_type, value))
+            del timestamp
+            del datetime_str
             logging.debug(f"2- sensor {sensor_id} batch size = {len(event_batches[sensor_id][0])}")
 
             if len(event_batches[sensor_id][0]) >= batch_size:

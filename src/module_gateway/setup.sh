@@ -13,9 +13,9 @@ PRAGMA cache_size = -2000;
 CREATE TABLE IF NOT EXISTS sensorEvents (
     idEvent INTEGER PRIMARY KEY AUTOINCREMENT,
     receptionTs INTEGER NOT NULL,
-    insertionTs INTEGER DEFAULT (strftime('%s', 'now', 'utc')),
+    insertionTs INTEGER DEFAULT(strftime('%s', 'now') * 1000),
     receptionDt TEXT NOT NULL,
-    insertionDt TEXT DEFAULT (datetime('now', 'utc')),
+    insertionDt TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')),
     idSensor TEXT,
     sensorType TEXT,
     sensorValue REAL
