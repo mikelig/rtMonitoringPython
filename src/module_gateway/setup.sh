@@ -18,14 +18,6 @@ CREATE TABLE IF NOT EXISTS sensorEvents (
     sensorType TEXT,
     sensorValue REAL
 );
-
-CREATE TABLE IF NOT EXISTS periodicBackups (
-        idBackup INTEGER PRIMARY KEY AUTOINCREMENT,
-        idSensor TEXT NOT NULL,
-        backupTs INTEGER NOT NULL,
-        mean REAL NOT NULL,
-        variance REAL NOT NULL
-);
 EOF
     echo "Database and tables created successfully."
 else

@@ -44,7 +44,7 @@ def filter_outliers(datos):
 
 # SQLite setup
 def init_db():
-    call("./setup.sh")
+    call("./setup.sh") # this is done from Dockerfile now, but it's rerun here just in case
 
 # Function to process batch
 async def process_batch(sensor_id, events):
