@@ -13,12 +13,14 @@ PRAGMA cache_size = -2000;
 CREATE TABLE IF NOT EXISTS sensorEvents (
     idEvent INTEGER PRIMARY KEY AUTOINCREMENT,
     receptionTs INTEGER NOT NULL,
-    insertionTs INTEGER DEFAULT (strftime('%s', 'now')),
-    insertionDt TEXT DEFAULT (datetime('now')),
+    insertionTs INTEGER DEFAULT (strftime('%s', 'now', 'utc')),
+    receptionDt TEXT NOT NULL,
+    insertionDt TEXT DEFAULT (datetime('now', 'utc')),
     idSensor TEXT,
     sensorType TEXT,
     sensorValue REAL
 );
+
 EOF
     echo "Database and tables created successfully."
 else
