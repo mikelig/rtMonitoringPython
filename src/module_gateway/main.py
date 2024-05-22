@@ -75,7 +75,7 @@ def filter_outliers(datos):
 
 # SQLite setup
 def init_db():
-    call("./setup.sh") # this is done from Dockerfile now, but it's rerun here just in case
+    call("./setup.sh") # this is done in docker now
 
 # Function to process batch
 async def process_batch(events):
@@ -176,7 +176,7 @@ def signal_handler(sig, frame):
 
 # Main
 if __name__ == '__main__':
-    # init_db()
+    # init_db() # Commented because this is done in docker now
 
     # Register signal handlers (CTRL + Z can be used to stop without forcing the signals)
     signal.signal(signal.SIGINT, signal_handler)
