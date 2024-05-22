@@ -1,10 +1,9 @@
 #!/bin/sh
-DB_FILE="sensor_events.db"
 
 # Check if the database file already exists
-if [ ! -f "$DB_FILE" ]; then
+if [ ! -f "$SQLITE_DB_PATH" ]; then
     # Create the database and set up the tables
-    sqlite3 "$DB_FILE" <<EOF
+    sqlite3 "$SQLITE_DB_PATH" <<EOF
 PRAGMA journal_mode = WAL;
 PRAGMA synchronous = NORMAL;
 PRAGMA mmap_size = 268435456;
@@ -22,7 +21,8 @@ CREATE TABLE IF NOT EXISTS sensorEvents (
 );
 
 EOF
-    echo "Database and tables created successfully."
+    echo "Database and tables created successfully in: $SQLITE_DB_PATH" > init_db.txt
 else
-    echo "Database already exists. No changes made."
+    echo "Database already exists. No changes made." > init_db.txt
 fi
+

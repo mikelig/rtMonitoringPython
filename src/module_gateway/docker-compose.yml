@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  gatewaysubscriber:
+    image: gatewaysubscriber
+    build: .
+    environment:
+      - BROKER_ADD=${BROKER_ADD}
+      - BROKER_PORT=${BROKER_PORT}
+      - MQTT_TOPIC=${MQTT_TOPIC}
+      - CLIENT_ID=${CLIENT_ID}
+      - SQLITE_DB_PATH=${SQLITE_DB_PATH}
+    network_mode: host
+    volumes:
+      - logs:/app/logs
+      - sqlite_data:/data
+
+volumes:
+  logs:
+  sqlite_data:
+

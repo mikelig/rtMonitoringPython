@@ -10,16 +10,45 @@ from subprocess import call
 from threading import Timer
 import logging
 from datetime import datetime, timezone
+import os
+import sys
 
-LOGLEVEL = 30 #warning
+LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
+BROKER = os.environ.get('BROKER_ADD')
+PORT = int(os.environ.get('BROKER_PORT', 1883))
+TOPIC = os.environ.get('MQTT_TOPIC')
+CLIENT_ID = os.environ.get('CLIENT_ID')
+SQLITE_DB_PATH= os.environ.get('SQLITE_DB_PATH', 'sensor_events.db')
+
+
+# Configure root logger to write to both file and STDOUT
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='testing.log', encoding='utf-8', level=LOGLEVEL, format='%(asctime)s %(message)s')
+logger.setLevel(logging.DEBUG)
 
+# Create file handler
+file_handler = logging.FileHandler(f'{CLIENT_ID}.log', encoding='utf-8')
+file_handler.setLevel(logging.DEBUG)
+
+# Create console handler (STDOUT)
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.DEBUG)
+
+# Create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
+# Add the handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+logger.info(f"HOST = {BROKER}  class: {BROKER.__class__}")
+logger.info(f"Port = {PORT}  class: {PORT.__class__}")
+logger.info(f"Topic = {TOPIC}  class: {TOPIC.__class__}")
+logger.info(f"ClientID = {CLIENT_ID}  class: {CLIENT_ID.__class__}")
+logger.info(f"DB PATH = {SQLITE_DB_PATH}  class: {SQLITE_DB_PATH.__class__}")
 # MQTT Settings
-BROKER = 'localhost'
-PORT = 1883
-TOPIC = 'sensor_data'
-CLIENT_ID = 'test_gw'
+
 
 # Global variables
 event_batches = {}
@@ -41,7 +70,7 @@ def filter_outliers(datos):
         outlier_indices = [i for i, v in enumerate(datos) if v < low or v > high]
         return outlier_indices
     except Exception as e:
-        logging.error(f"Error calculating outliers: {e}")
+        logger.error(f"Error calculating outliers: {e}")
         return []
 
 # SQLite setup
@@ -49,8 +78,8 @@ def init_db():
     call("./setup.sh") # this is done from Dockerfile now, but it's rerun here just in case
 
 # Function to process batch
-async def process_batch(sensor_id, events):
-    logging.debug(f"4_1- entered process_batch with events len = {len(events)}")
+async def process_batch(events):
+    logger.debug(f"4_1- entered process_batch with events len = {len(events)}")
     values = [event[4] for event in events]
     outlier_indices = filter_outliers(values)
     filtered_events = [event for index, event in enumerate(events) if index not in outlier_indices]
@@ -58,9 +87,9 @@ async def process_batch(sensor_id, events):
     del values
     del outlier_indices
     if filtered_events:
-        logging.debug(f"4_2- Len after filter: {len(filtered_events)}")
-        conn = sqlite3.connect('sensor_events.db')
-        logging.debug(f"4_3 DB connected")
+        logger.debug(f"4_2- Len after filter: {len(filtered_events)}")
+        conn = sqlite3.connect(SQLITE_DB_PATH)
+        logger.debug(f"4_3 DB connected")
         cursor = conn.cursor()
         cursor.executemany('''
         INSERT INTO sensorEvents (receptionTs, receptionDt, idSensor, sensorType, sensorValue)
@@ -68,22 +97,22 @@ async def process_batch(sensor_id, events):
         ''', filtered_events)
         conn.commit()
         conn.close()
-        logging.debug(f"4_4 Events saved to DB")
+        logger.debug(f"4_4 Events saved to DB")
     del filtered_events
 
 # Timer callback function
 def on_batch_timeout(sensor_id):
     with lock:
-        logging.debug(f"4_- Timeout for {sensor_id} detected")
+        logger.debug(f"4_- Timeout for {sensor_id} detected")
         if sensor_id in event_batches and event_batches[sensor_id][0]:
-            asyncio.run(process_batch(sensor_id, event_batches[sensor_id][0]), debug=True)
+            asyncio.run(process_batch(event_batches[sensor_id][0]))
             event_batches[sensor_id] = ([], None)
 
 # MQTT Callback
 def on_message(client, userdata, msg):
     try:
         data = json.loads(msg.payload.decode())
-        logging.debug(f"1- received msg: {data}")
+        logger.debug(f"1- received msg: {data}")
 
         sensor_id = data['sensor_id']
         sensor_type = data['sensor_type']
@@ -99,13 +128,13 @@ def on_message(client, userdata, msg):
             event_batches[sensor_id][0].append((timestamp, datetime_str, sensor_id, sensor_type, value))
             del timestamp
             del datetime_str
-            logging.debug(f"2- sensor {sensor_id} batch size = {len(event_batches[sensor_id][0])}")
+            logger.debug(f"2- sensor {sensor_id} batch size = {len(event_batches[sensor_id][0])}")
 
             if len(event_batches[sensor_id][0]) >= batch_size:
-                logging.debug(f"3- Going to process batch for sensor {sensor_id}")
+                logger.debug(f"3- Going to process batch for sensor {sensor_id}")
                 if event_batches[sensor_id][1] is not None:
                     event_batches[sensor_id][1].cancel()
-                asyncio.run(process_batch(sensor_id, event_batches[sensor_id][0]), debug=True)
+                asyncio.run(process_batch(event_batches[sensor_id][0]))
                 event_batches[sensor_id] = ([], None)
             else:
                 if event_batches[sensor_id][1] is not None:
@@ -117,7 +146,7 @@ def on_message(client, userdata, msg):
                 event_batches[sensor_id][1].start()
 
     except Exception as e:
-        logging.error(f"Error processing message: {e}")
+        logger.error(f"Error processing message: {e}")
 
 # MQTT Client Setup
 def connect_mqtt():
@@ -133,21 +162,21 @@ def run_mqtt_client():
 
 # Signal handler for clean shutdown
 def signal_handler(sig, frame):
-    logging.debug("Signal received, stopping all timers...")
+    logger.debug("Signal received, stopping all timers...")
     with lock:
         for sensor_id, (events, timer) in event_batches.items():
             if timer is not None:
                 timer.cancel()
-        logging.debug("All timers stopped, processing remaining batches...")
+        logger.debug("All timers stopped, processing remaining batches...")
         for sensor_id, (events, _) in event_batches.items():
             if events:
-                asyncio.run(process_batch(sensor_id, events), debug=True)
-    logging.debug("All batches processed, exiting...")
+                asyncio.run(process_batch(events))
+    logger.debug("All batches processed, exiting...")
     exit(0)
 
 # Main
 if __name__ == '__main__':
-    init_db()
+    # init_db()
 
     # Register signal handlers (CTRL + Z can be used to stop without forcing the signals)
     signal.signal(signal.SIGINT, signal_handler)
@@ -156,4 +185,4 @@ if __name__ == '__main__':
     try:
         run_mqtt_client()
     except KeyboardInterrupt:
-        logging.debug("Exiting...")
+        logger.debug("Exiting...")
