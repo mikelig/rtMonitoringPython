@@ -10,10 +10,16 @@ services:
       - MQTT_TOPIC=${MQTT_TOPIC}
       - CLIENT_ID=${CLIENT_ID}
       - SQLITE_DB_PATH=${SQLITE_DB_PATH}
+      - CPU_CLOCK=800
     network_mode: host
     volumes:
       - logs:/app/logs
       - sqlite_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
 
 volumes:
   logs:
