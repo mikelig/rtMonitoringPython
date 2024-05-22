@@ -3,7 +3,10 @@ version: '3'
 services:
   sensorsimulator:
     image: sensorsimulator
-    build:
-      context: .
+    build: .
+    environment:
+      BROKER_ADD: ${BROKER_ADD}
+      BROKER_PORT: ${BROKER_PORT}
+      MQTT_TOPIC: ${MQTT_TOPIC}
     network_mode: host
     scale: 10
