@@ -25,15 +25,15 @@ TIMEOUT_SEC= int(os.environ.get('TIMEOUT_SEC', 60))
 
 # Configure root logger to write to both file and STDOUT
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(LOGLEVEL)
 
 # Create file handler
 file_handler = logging.FileHandler(f'{CLIENT_ID}.log', encoding='utf-8')
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(LOGLEVEL)
 
 # Create console handler (STDOUT)
 console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(LOGLEVEL)
 
 # Create formatter and add it to the handlers
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
