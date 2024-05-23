@@ -19,6 +19,8 @@ PORT = int(os.environ.get('BROKER_PORT', 1883))
 TOPIC = os.environ.get('MQTT_TOPIC')
 CLIENT_ID = os.environ.get('CLIENT_ID')
 SQLITE_DB_PATH= os.environ.get('SQLITE_DB_PATH', 'sensor_events.db')
+BATCH_SIZE= int(os.environ.get('BATCH_SIZE', 100))
+TIMEOUT_SEC= int(os.environ.get('TIMEOUT_SEC', 60))
 
 
 # Configure root logger to write to both file and STDOUT
@@ -47,13 +49,15 @@ logger.info(f"Port = {PORT}  class: {PORT.__class__}")
 logger.info(f"Topic = {TOPIC}  class: {TOPIC.__class__}")
 logger.info(f"ClientID = {CLIENT_ID}  class: {CLIENT_ID.__class__}")
 logger.info(f"DB PATH = {SQLITE_DB_PATH}  class: {SQLITE_DB_PATH.__class__}")
+logger.info(f"Batch size = {BATCH_SIZE}  class: {BATCH_SIZE.__class__}")
+logger.info(f"Timeout secs = {TIMEOUT_SEC}  class: {TIMEOUT_SEC.__class__}")
 # MQTT Settings
 
 
 # Global variables
 event_batches = {}
-batch_size = 100
-batch_timeout = 60  # seconds
+batch_size = BATCH_SIZE
+batch_timeout = TIMEOUT_SEC  # seconds
 
 # Lock for thread safety
 lock = threading.Lock()

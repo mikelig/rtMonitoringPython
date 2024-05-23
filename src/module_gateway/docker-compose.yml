@@ -10,6 +10,8 @@ services:
       - MQTT_TOPIC=${MQTT_TOPIC}
       - CLIENT_ID=${CLIENT_ID}
       - SQLITE_DB_PATH=${SQLITE_DB_PATH}
+      - BATCH_SIZE=${BATCH_SIZE}
+      - TIMEOUT_SEC=${TIMEOUT_SEC}
       - CPU_CLOCK=800
     network_mode: host
     volumes:
