@@ -141,6 +141,7 @@ def on_message(client, userdata, msg):
                 asyncio.run(process_batch(event_batches[sensor_id][0]))
                 event_batches[sensor_id] = ([], None)
             else:
+                # Se resetea el timer ya que ha llegado un evento nuevo
                 if event_batches[sensor_id][1] is not None:
                     event_batches[sensor_id][1].cancel()
                 event_batches[sensor_id] = (
